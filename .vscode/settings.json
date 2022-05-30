@@ -1,6 +1,7 @@
 {
     "cSpell.words": [
         "Postgre",
-        "psycopg"
+        "psycopg",
+        "SETVAL"
     ]
 }
