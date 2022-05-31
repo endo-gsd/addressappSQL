@@ -35,7 +35,16 @@ class PostgreConnect:
                 cur.execute(sql)
 
     def is_existed(self, name, tel):
-        pass
+        self.execute(\
+            "CREATE VIEW v_book AS (\
+            SELECT B.name, N.tel_number \
+            FROM address_books B, tels N\
+            WHERE B.tel_id = N.tel_id);\
+            SELECT V.name, V.tel_number FROM v_book V\
+            WHERE V.name =" + name + "\
+            OR V.tel_number =" + tel + ";\
+            ")
+        self.execute('DROP VIEW v_book;')
 
     def execute_add(self, name, tel):
         """ 名前と電話番号を登録するSQLを実行
@@ -50,13 +59,34 @@ class PostgreConnect:
 
 
     def execute_delete(self, name, tel):
-        pass
+        self.execute('BEGIN;\
+            DELETE FROM address_books B\
+            WHERE B.name = ' + name +\
+            'AND B.tel_id IN(SELECT N.tel_id FROM tels N\
+        		WHERE ' + tel + ' = N.tel_number);\
+            DELETE FROM tels N\
+            WHERE N.tel_id =(SELECT N.tel_id FROM tels N\
+        	WHERE N.tel_id NOT IN(\
+		        SELECT B.tel_id FROM address_books B));\
+            COMMIT;	')
 
     def execute_list(self):
-        pass
+        rows = self.execute('SELECT B.name, N.tel_number\
+            FROM address_books B, tels N\
+            WHERE B.tel_id = N.tel_id;')
+        return rows
 
     def execute_search(self, key):
-        pass
+        self.execute(\
+            "CREATE VIEW v_book AS (\
+            SELECT B.name, N.tel_number \
+            FROM address_books B, tels N\
+            WHERE B.tel_id = N.tel_id);\
+            SELECT V.name, V.tel_number FROM v_book V\
+            WHERE V.name LIKE'%'" + key + "'%'\
+            OR V.tel_number LIKE'%'" + key + "'%';\
+            ")
+        self.execute('DROP VIEW v_book;')
 
     def execute_clear(self):
         """ データベース内のデータをすべて削除するSQLを実行
@@ -67,3 +97,7 @@ class PostgreConnect:
             SELECT SETVAL('address_books_book_id_seq', 1, false);\
             SELECT SETVAL('tels_tel_id_seq', 1, false);")
    
+
+posgre = PostgreConnect()
+rows = posgre.execute_list
+print(rows)
